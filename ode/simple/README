@@ -1,0 +1,5 @@
+Just run
+	$ python3 plot.py
+
+This evaluates the incremental test, and also generates the orbits into
+	- plot.png

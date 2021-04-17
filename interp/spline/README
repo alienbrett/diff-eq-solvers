@@ -1,0 +1,5 @@
+A set of equations that can interpolate splines, both periodic and not.
+
+To generate the plots, just run
+$ python3 run.py
+
