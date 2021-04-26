@@ -94,46 +94,47 @@ def matGen (n):
 
 
 
+if __name__ == '__main__':
 
 
 
-# Test this size matrix
-k = 5
+    # Test this size matrix
+    k = 5
 
-# Generate matrix accordingly
-# We never actually use the full MxM matrix,
-# we just generate the diagonals
-d,a,b = matGen(k)
+    # Generate matrix accordingly
+    # We never actually use the full MxM matrix,
+    # we just generate the diagonals
+    d,a,b = matGen(k)
 
-# Our wrapper for matrix
-t = TriDiag(a,d,b)
+    # Our wrapper for matrix
+    t = TriDiag(a,d,b)
 
-# Generate arbitrary x
-x = np.arange(k)
+    # Generate arbitrary x
+    x = np.arange(k)
 
-# Pass X through matrix
-y = t.mult(x)
-
-
-# Try to solve for the X that generated Ax=y
-print("SOLVING MATRIX")
-print(''.join(['#']*40))
-xp = t.solve(y, verbose=True)
-
-print(''.join(['#']*40))
-print('Original X:', x)
-print('Solution X:', xp)
-print('Norm of difference:', np.linalg.norm(x-xp))
+    # Pass X through matrix
+    y = t.mult(x)
 
 
+    # Try to solve for the X that generated Ax=y
+    print("SOLVING MATRIX")
+    print(''.join(['#']*40))
+    xp = t.solve(y, verbose=True)
+
+    print(''.join(['#']*40))
+    print('Original X:', x)
+    print('Solution X:', xp)
+    print('Norm of difference:', np.linalg.norm(x-xp))
 
 
-# Try to solve for the X that generated Ax=y
-print("SOLVING MATRIX")
-print(''.join(['#']*40))
-xp = t.solve(y, verbose=True)
 
-print(''.join(['#']*40))
-print('Original X:', x)
-print('Solution X:', xp)
-print('Norm of difference:', np.linalg.norm(x-xp))
+
+    # Try to solve for the X that generated Ax=y
+    print("SOLVING MATRIX")
+    print(''.join(['#']*40))
+    xp = t.solve(y, verbose=True)
+
+    print(''.join(['#']*40))
+    print('Original X:', x)
+    print('Solution X:', xp)
+    print('Norm of difference:', np.linalg.norm(x-xp))

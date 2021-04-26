@@ -9,7 +9,7 @@ from pde import PDESolver
 class WavePDESolver(PDESolver):
     
     def __init__( self, t0, t1, d_func, e_func ):
-        self.ts = (t0, t1)
+        super().__init__(t0, t1)
         
         self.d_func = d_func
         self.e_func = e_func

@@ -85,7 +85,7 @@ class PDESolver:
         loop = ts[1:]
         
         # Loop across static time samples
-        for t in (tqdm(loop) if progress else loop):
+        for t in (pbar if progress else loop):
 
             # Load current temperature
             U = res[-1]

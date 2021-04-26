@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+from numerical_eqs.utils import SimTime
+
 
 def basicStep ( x, t, vf, dt ):
 	'''Euler step, but using derivative at middle point of dt
@@ -30,60 +32,6 @@ def step ( x, t, vf, dt ):
 	# Return our guess, and the estimated error
 	return (xnew, xfine - xcourse)
 	
-	
-	
-class SimTime:
-	def __init__(self, tol, agrow, ashrink, dtmin, dtmax, tstart, tend):
-		
-		self.tol = tol
-		self.agrow = agrow
-		self.ashrink = ashrink
-		self.dtmin = dtmin
-		self.dtmax = dtmax
-		self.dt = dtmin
-		
-		self.stepsSinceReject = 0
-		self.tstart = tstart
-		self.tend = tend
-		self.t = tstart
-
-
-	def nextStep(self):
-		self.t = min(self.t + self.dt, self.tend)
-		return self.t
-	
-	
-	def advance (self, error):
-		'''
-		If error very big,
-			dtFine
-		if error sorta big,
-			dtFiner
-		if error not big,
-			dtCourser
-		'''
-		error = np.linalg.norm(error)
-	
-		if error > self.tol:
-			self.dt = max(self.dtmin, self.dt / 2.0 )
-			self.stepsSinceReject = 0
-			
-			return self.dt == self.dtmin
-		
-		
-		elif error > 0.75 * self.tol:
-			self.dt = max(self.dtmin, self.dt * self.ashrink)
-			return True
-			
-		
-		elif self.stepsSinceReject > 0:
-			self.dt = min(self.dtmax, self.dt * self.agrow)
-			self.stepsSinceReject = 0
-			return True
-		
-		else:
-			self.stepsSinceReject += 1
-			return True
 	
 	
 	
