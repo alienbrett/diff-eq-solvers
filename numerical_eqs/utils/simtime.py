@@ -32,17 +32,15 @@ class SimTime:
 			self.ewma = (1.0-self.alpha)*self.ewma + self.alpha*self.dt
 
 			
-	# def rolling_dt_estimate()
-	#	 '''Returns a weighted moving average of the dt stepsize used over the lifetime of this object
-	#	 This value might come in handy for building a new SimTime object where this one leaves off
-	#	 (might prevent the accellerating dt needed for large dt)
-	#	 '''
-	#	 return self.ewma
-	
-	
 
 	def nextStep(self):
-		self.t = min(self.t + self.dt, self.tend)
+		if self.t + self.dt >= self.tend:
+			self.t = self.tend
+		elif self.t + 2*self.dt >= self.tend:
+			self.t = (self.t + self.tend) / 2.0
+		else:
+			self.t = self.t + self.dt
+		# self.t = min(self.t + self.dt, self.tend)
 		return self.t
 
 

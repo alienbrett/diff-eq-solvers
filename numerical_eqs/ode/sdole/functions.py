@@ -13,7 +13,7 @@ def basicStep ( x, t, vf, dt ):
 	
 	tmid = t + dt2
 	
-	w = x + dt2 * vf(t, x)
+	w = x + dt2 * vf( t, x )
 	
 	return x + dt * vf( tmid, w )
 
@@ -55,6 +55,7 @@ def SDOLESolve(
         'dtmin': 1e-6,
         'dtmax': 100
     },
+    dont_wrap_func = False,
     explicit_times = {
         'time points' : [],
         'callback': lambda yt, t: yt
@@ -81,6 +82,11 @@ def SDOLESolve(
                     'dtmin': 1e-6,
                     'dtmax': 100
                 }
+            dont_wrap_func:
+                This parameter will modify how func is treated. If set to True,
+                func will be called like func(x,t,dt), and func should return
+                (dY, error) where y_(t+dt) = y_t + dY. The error returned is used
+                in the tolerance estimates
             explicit_times:
                 dict, used to evaluate a separate callable which can optionally modify the ODE value at certain times. dict should look like
                 {
@@ -105,7 +111,7 @@ def SDOLESolve(
         # Get our time controls in order
         # This makes sure our function can handle either the recursive case or the base level
         time_controls = {
-            **{ 'start_dt': time_controls['dtmin'] },
+            **{ 'start_dt': time_controls.get('dtmin', 1e-6) },
             **{
                 'tol': 1.0e-3,
                 'agrow': 1.25,
@@ -133,12 +139,13 @@ def SDOLESolve(
         
         sol = None
         
+        # print(explicit_times)
         # See exactly what we should be calling
         callback = explicit_times.get( 'callback', (lambda ys, t: ys) )
         
         new_start_dt = None
         if len(known_times) > 2:
-            
+            # print("Using recursive mode")
             res = None
             for i in range(1, len(known_times)):
                 
@@ -156,6 +163,7 @@ def SDOLESolve(
                     explicit_times = {},
                     progress=progress,
                     pbar = pbar,
+                    dont_wrap_func = dont_wrap_func,
                     include_t0 = ( include_t0 if i == 1 else False )
                 )
                 new_start_dt = new_res['rolling dt']
@@ -187,6 +195,7 @@ def SDOLESolve(
         # We should actually compute the thing
         # This is the base-level recursive step
         else:
+            # print("Using base mode")
             # Get all our ducks in a row before this thingy
             res = [y0]
             ts  = [t0]
@@ -207,16 +216,38 @@ def SDOLESolve(
             )
 
 
+            # We need a function that can evaluate
+            #  the derivative & error given the 
+            #  stepsize, time, and current position
+            # This could possibly be user-supplied
+            if dont_wrap_func:
+                def dyFunc(x, t, dt):
+                    return func (
+                        x = x,
+                        t = t,
+                        dt = dt
+                    )
+            else:
+                def dyFunc(x, t, dt):
+                    return step (
+                        x = x,
+                        t = t,
+                        vf = func,
+                        dt = dt
+                    )
+                
+            
+            
             while ts[-1] < t1:
 
                 yt = res[-1]
                 t = ts[-1]
 
-                yt, error = step (
+                # Evaluate our error using the established step function
+                yt, error = dyFunc(
                     x = yt,
                     t = t,
-                    vf = func,
-                    dt = simtime.dt,
+                    dt = simtime.dt
                 )
 
                 # Should we increment step?

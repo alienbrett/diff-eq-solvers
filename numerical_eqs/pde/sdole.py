@@ -116,7 +116,7 @@ class SDOLESolver(PDESolver):
         
         # Take two steps
         U1 = self.step_raw( t, U, dt * 0.5 ) + U
-        D = self.step_raw( t + dt*0.5, U1, dt * 0.5 ) + U
+        D = self.step_raw( t + dt*0.5, U1, dt * 0.5 ) + U1
 
         # This is our backwards difference
         Ut = 2*D - S

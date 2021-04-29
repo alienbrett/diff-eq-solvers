@@ -3,7 +3,12 @@ import numpy as np
 def tridiag_mult(M, x):
     '''Multiply tridiagonal matrix by a vector
     '''
+    # print(M.shape)
+    # print(x.shape)
+    
     j = np.multiply( M, x )    
+    # print(j)
+    
     res = j[1]
     res[:-1] += j[0,1:]
     res[1:] += j[-1,:-1]
