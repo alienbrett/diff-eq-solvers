@@ -1,133 +1,66 @@
 '''
 This version of PDESolver uses Step DOubling with Local Extrapolation
 '''
-
-import numpy as np
-from tqdm import tqdm
-
-from utils import tridiag_mult, gen_mats
-from pde import PDESolver
-from numerical_eqs.utils import SimTime
+from numerical_eqs.ode.sdole import SDOLESolve
 
 
 
-class SDOLESolver(PDESolver):
-    time_control_defaults = {
-        'tol': 1.0e-4,
-        'agrow': 1.25,
-        'ashrink': 0.8,
-        'dtmin': 1e-7,
-        'dtmax': 10
-    }
+class SDOLEPDESolver:
     
-    
-    
-    def solve(
-         self, U0, mesh,
-        boundaries = (None, None),
-        time_controls={}
-    ):
-        '''Solve the PDE system, using step doubling and local extrapolation
-        Time controls can be modified by setting parameters in time_controls dict
-        Defaults for time controls are found in SDOLESolver.time_control_defaults
+    def step(self, x, t, dt):
+        '''Overwritten by child instantiation.
+        This should be able to give the dU (not the derivative, the difference)
+        This should return (du, error) a tuple, the result and the error estimation for the step
         '''
-        
-        t0, t1 = self.ts
-        
-        time_controls = { **self.time_control_defaults, **time_controls }
-        # Get our time simulator in order
-        simtime = SimTime(
-            tol     = time_controls['tol'],
-            agrow   = time_controls['agrow'],
-            ashrink = time_controls['ashrink'],
-            dtmin   = time_controls['dtmin'],
-            dtmax   = time_controls['dtmax'],
-            tstart  = t0,
-            tend    = t1,
-        )
-        
-        
-        
-        
-        
-        # Clear out any residual M and S that might be here
-        for a in ('_M', '_S'):
-            if hasattr(self, a):
-                delattr(self, a)
-        
-        # Get our boundaries in order
+        pass
+    
+    def setup(self):
+        '''Called before the solver actually runs
+        '''
+        pass
+    
+    def process(self, results):
+        '''Give the child the chance to modify the output before we're done
+        '''
+        return results
+    
+    
+    
+    def solve( self, u0, mesh, t0, t1,  boundaries = (None, None), **ode_args, ):
+        '''Solve the PDE system, using step doubling and local extrapolation
+        Defaults for controls are found in SDOLESolver.time_control_defaults
+        '''
+    
+        # Make our boundaries default to +0 von neumann
         self.boundaries = list(map(
             lambda x: {'type': 'neumann', 'f': lambda t: 0.0} if x is None else x,
             boundaries
         ))
-
-        # Install the stuff needed
-        self._mesh = mesh
-        res = [U0]
-        ts  = [t0]
-        # err_steps = []
-        # err_nonlins = []
-
-        stepsAccepted = 0
-        stepsRejected = 0
-
-        pbar = tqdm(total=t1-t0)
-        while ts[-1] < t1:
-            
-            U = res[-1]
-            t = ts[-1]
-            
-            dU = self.step ( t, U, simtime.dt, )
-            error, Ut = self.step (
-                t,
-                U,
-                simtime.dt,
-                # Just use the default maximum
-                # errorfn = 
-            )
-
-            # Should we increment step?
-            if simtime.advance(error):
-                # Store back our info
-                res.append(Ut)
-                # Move to the next time
-                ts.append(simtime.nextStep())
-                # Update our progress bar
-                pbar.update(ts[-1] - t)
-                
-                stepsAccepted += 1
-                
-            # This step was rejected
-            else:
-                stepsRejected += 1
-
-        pbar.close()
-        res = self.process_sol(res, ts)
-        self.solution = res
-        return self.solution
         
+        self.mesh = mesh
+        self.u0 = u0
         
+        # Give the child a chance to pre-compute some stuff
+        self.setup()
+   
+        # Now run our ODE solver
+        res = SDOLESolve(
+            y0 = u0,
+            func = self.step,
+            t0 = t0,
+            t1 = t1,
+            # This is important
+            # Our step function will do the full deal on its own
+            dont_wrap_func=True,
+            **ode_args
+        )
+    
+        # Allow the child class to get a turn after this is done
+        return self.process(res)
     
     
-    def step ( self, t, U, dt, errfn=lambda x: np.linalg.norm(x, ord=np.inf) ):
-        '''Calculate the local extrapolated value using the specifics supplied by child class
-        '''
-        S = self.step_raw( t, U, dt ) + U
-        
-        # Take two steps
-        U1 = self.step_raw( t, U, dt * 0.5 ) + U
-        D = self.step_raw( t + dt*0.5, U1, dt * 0.5 ) + U1
 
-        # This is our backwards difference
-        Ut = 2*D - S
-        
-        # This is the error
-        err = errfn ( Ut )
-        
-        return err, Ut
-    
-    
-    def step_raw ( self, t, U, dt ):
-        '''Take a step and return dU at this point
-        '''
-        pass
+
+
+
+
