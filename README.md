@@ -13,6 +13,7 @@ To run locally, the package has to be installed, so I recommend using a virtuale
 ```bash
 $ cd numerical-eqs-collection
 $ virtualenv venv
+$ source venv/bin/activate
 $ pip install -e .
 $ jupyter # to spin up an instance that can run the notebook files
 ```
